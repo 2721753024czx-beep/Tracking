@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tracking · 双路摄像头</title><link rel="stylesheet" href="/live.css"></head>
+<body>
+<header class="top"><a href="/" class="brand">T<span>TRACKING / 3.0</span></a><a href="/" class="back">进入录像回溯工作台 ↗</a></header>
+<main>
+  <div class="intro"><div><div class="eyebrow">CAMERA DESK · 本地采集</div><h1>双路摄像头</h1><p>实时查看两个机位，把需要的片段录到 Mac。</p></div><span class="layout-note">左右布置 · 画面不重叠</span></div>
+  <section class="toolbar" aria-label="双路操作">
+    <div class="toolbar-actions"><button id="connectAll">连接两路</button><button id="recordAll" class="record" disabled>● 双路开始录制</button><button id="stopAll" class="secondary" disabled>■ 停止两路录制</button></div>
+    <div class="record-options"><label>录制上限<input id="duration" type="number" min="1" max="86400" step="1" value="600" aria-label="录制上限秒数"><span>秒，可提前停止</span></label><label>保存方式<select id="codec"><option value="h264">MP4 · H.264（兼容 Mac）</option><option value="copy">MP4 · 原流复制（可能需兼容处理）</option></select></label></div>
+  </section>
+  <p id="notice" class="notice" role="status">在下方填写两台设备的密码，连接后即可预览。密码只用于本次本机连接。</p>
+  <section class="cameras" aria-label="两路实时画面">
+    <article class="camera-card" data-camera="cam_a">
+      <div class="card-heading"><div><span class="camera-number">01</span><h2>摄像头1</h2><span class="ip">192.168.1.101</span></div><span class="state" data-role="state">未连接</span></div>
+      <div class="viewport"><img data-role="image" alt="摄像头1实时画面" hidden><div class="empty" data-role="empty"><span class="camera-symbol">▣</span><strong>等待连接摄像头1</strong><span>连接后显示实时画面</span></div><span class="recording-badge" data-role="recording-badge" hidden>● REC</span><span class="frame-info" data-role="frame-info"></span></div>
+      <div class="card-controls"><button data-action="record" class="record" disabled>● 开始录制</button><button data-action="stop-record" class="secondary" disabled>■ 停止录制</button><button data-action="disconnect" class="text-button" disabled>断开预览</button></div>
+      <p class="camera-message" data-role="message" role="status">子码流流畅预览，主码流高清录制。</p>
+      <form class="camera-meta" data-role="metadata" autocomplete="off" aria-label="摄像头1机位信息">
+        <div class="fields"><label>显示名称<input name="label" value="摄像头1" maxlength="100"></label><label>相对位置／机位说明<input name="location" placeholder="例如：左侧，朝向走廊（按实际填写）" maxlength="200"></label></div>
+        <div class="metadata-actions"><button type="submit" class="secondary">保存机位信息</button><span data-role="metadata-status" role="status">连接后也可随时修改</span></div>
+      </form>
+      <details class="connection" open><summary>连接设置 <span>cam_a</span></summary>
+        <form class="connection-form" autocomplete="off">
+          <div class="fields"><label>设备账号<input name="username" value="admin" autocomplete="off" required maxlength="100"></label><label>设备密码<input name="password" type="password" autocomplete="new-password" required maxlength="512" placeholder="在本机输入摄像头1密码"></label></div>
+          <input name="camera_id" type="hidden" value="cam_a">
+          <details class="advanced"><summary>取流地址</summary><label>预览 RTSP · 子码流<input name="preview_url" type="url" value="rtsp://192.168.1.101:554/stream2" required></label><label>录制 RTSP · 主码流<input name="record_url" type="url" value="rtsp://192.168.1.101:554/stream1" required></label></details>
+          <button type="submit" class="connect-one">连接摄像头1</button>
+        </form>
+      </details>
+    </article>
+    <article class="camera-card" data-camera="cam_b">
+      <div class="card-heading"><div><span class="camera-number">02</span><h2>摄像头2</h2><span class="ip">192.168.1.102</span></div><span class="state" data-role="state">未连接</span></div>
+      <div class="viewport"><img data-role="image" alt="摄像头2实时画面" hidden><div class="empty" data-role="empty"><span class="camera-symbol">▣</span><strong>等待连接摄像头2</strong><span>连接后显示实时画面</span></div><span class="recording-badge" data-role="recording-badge" hidden>● REC</span><span class="frame-info" data-role="frame-info"></span></div>
+      <div class="card-controls"><button data-action="record" class="record" disabled>● 开始录制</button><button data-action="stop-record" class="secondary" disabled>■ 停止录制</button><button data-action="disconnect" class="text-button" disabled>断开预览</button></div>
+      <p class="camera-message" data-role="message" role="status">子码流流畅预览，主码流高清录制。</p>
+      <form class="camera-meta" data-role="metadata" autocomplete="off" aria-label="摄像头2机位信息">
+        <div class="fields"><label>显示名称<input name="label" value="摄像头2" maxlength="100"></label><label>相对位置／机位说明<input name="location" placeholder="例如：右侧，朝向入口（按实际填写）" maxlength="200"></label></div>
+        <div class="metadata-actions"><button type="submit" class="secondary">保存机位信息</button><span data-role="metadata-status" role="status">连接后也可随时修改</span></div>
+      </form>
+      <details class="connection" open><summary>连接设置 <span>cam_b</span></summary>
+        <form class="connection-form" autocomplete="off">
+          <div class="fields"><label>设备账号<input name="username" value="admin" autocomplete="off" required maxlength="100"></label><label>设备密码<input name="password" type="password" autocomplete="new-password" required maxlength="512" placeholder="在本机输入摄像头2密码"></label></div>
+          <input name="camera_id" type="hidden" value="cam_b">
+          <details class="advanced"><summary>取流地址</summary><label>预览 RTSP · 子码流<input name="preview_url" type="url" value="rtsp://192.168.1.102:554/stream2" required></label><label>录制 RTSP · 主码流<input name="record_url" type="url" value="rtsp://192.168.1.102:554/stream1" required></label></details>
+          <button type="submit" class="connect-one">连接摄像头2</button>
+        </form>
+      </details>
+    </article>
+  </section>
+  <section class="recordings"><div class="section-heading"><div><div class="eyebrow">LOCAL RECORDINGS</div><h2>最近录制</h2></div><a href="/">处理录像与检索 ↗</a></div><p id="savePath" class="save-path">录像保存到当前工作区的 captures 文件夹。</p><div id="recordingsList" class="recordings-list"><p class="muted">还没有本次摄像头的录制记录。</p></div></section>
+  <footer>RTSP 从摄像头取流，录像以 MP4 保存。双路按钮同时发起采集，不代表两台摄像头已经逐帧同步。<br>当前两机位画面不重叠，跨镜头身份与时间关系在后续回溯中核对。</footer>
+</main><script src="/live.js"></script>
+</body></html>

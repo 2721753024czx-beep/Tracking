@@ -1,0 +1,7 @@
+numpy==2.5.3
+Pillow==12.3.0
+av==19.0.1
+ultralytics==8.4.174
+onnxruntime==1.31.0
+lap==0.5.13
+torch==2.14.1

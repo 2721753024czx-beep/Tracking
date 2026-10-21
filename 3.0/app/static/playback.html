@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>目标跟踪回放 · Tracking</title>
+  <link rel="stylesheet" href="/playback.css">
+</head>
+<body>
+  <header class="page-header">
+    <div><p class="eyebrow">TRACKING / 录像回放</p><h1>跟着选定目标看</h1></div>
+    <a class="back-link" href="/">返回核对工作台 <span aria-hidden="true">↗</span></a>
+  </header>
+  <main>
+    <div class="context-line"><span id="taskName">正在读取任务…</span><span id="mediaName"></span></div>
+    <section class="playback-panel" aria-label="选定目标回放">
+      <div class="playback-topline">
+        <div class="state-title"><span id="stateDot" class="state-dot" data-tone="waiting"></span><strong id="targetState" role="status" aria-live="polite">准备回放</strong></div>
+        <span id="clock" class="clock">00:00.00 <span>/ 00:00.00</span></span>
+      </div>
+      <div id="stage" class="stage">
+        <div id="videoFrame" class="video-frame">
+          <video id="playbackVideo" controls playsinline preload="metadata" aria-label="实际采样录像"></video>
+          <canvas id="targetOverlay" aria-label="选定人物检测框"></canvas>
+        </div>
+        <div id="stageMessage" class="stage-message"><div class="spinner" aria-hidden="true"></div><strong id="loadTitle">正在读取回放记录</strong><p id="loadMessage">读取已保存的目标片段和采样画面…</p></div>
+        <div id="pickHint" class="pick-hint" hidden>已暂停 · 点击画面中的浅色人物框，切换回放目标</div>
+      </div>
+      <div id="errorBox" class="error-box" hidden role="alert"><strong id="errorTitle">暂时无法回放</strong><p id="errorMessage"></p><button id="retryButton" type="button">重试</button></div>
+      <div class="playback-controls">
+        <button id="playButton" class="primary" disabled type="button"><span aria-hidden="true">▶</span> 播放</button>
+        <button id="leadInButton" disabled type="button">从片段前 2 秒播放</button>
+        <button id="replayButton" disabled type="button">重新播放本片段</button>
+        <span class="controls-spacer"></span>
+        <label class="speed-label">速度<select id="playbackSpeed" disabled aria-label="播放速度"><option value="0.5">0.5× 慢放</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+        <button id="pickButton" disabled type="button" aria-pressed="false">画面选人</button>
+        <label class="trail-label"><input id="showTrail" type="checkbox" disabled>显示轨迹</label>
+      </div>
+      <div class="timeline-area">
+        <div class="timeline-heading"><strong>检测覆盖</strong><span id="coverageInfo">读取中…</span></div>
+        <canvas id="coverageTimeline" width="1600" height="48" role="slider" aria-label="录像时间轴，绿色为已检出，橙色为暂未检出，灰色为片段外" tabindex="0" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></canvas>
+        <div class="timeline-ticks"><span>00:00</span><span id="timelineMiddle">—</span><span id="timelineEnd">—</span></div>
+        <div class="timeline-legend"><span><i class="legend-dot detected"></i>已检出</span><span><i class="legend-dot missing"></i>暂未检出</span><span><i class="legend-dot outside"></i>片段外</span><span class="timeline-tip">点击时间轴定位</span></div>
+      </div>
+    </section>
+    <section class="target-card" aria-label="当前回放目标">
+      <div class="portrait-wrap"><img id="targetPortrait" alt="当前回放目标的代表图" hidden><canvas id="targetPortraitCanvas" width="120" height="150" hidden></canvas><span id="portraitPlaceholder">目标图</span></div>
+      <div class="target-summary"><p class="eyebrow">当前选择</p><h2 id="targetName">尚未选定目标</h2><p id="targetRange">从核对工作台打开一个跟踪片段，即可查看目标回放。</p><p id="identityStatus" class="identity-status"></p></div>
+      <div class="playback-note"><strong>约 3 fps 采样回放，空缺不补框</strong><p>切换回放目标不改变身份确认。跟踪 ID 仅用于本路片段。</p><p id="sampleNote"></p></div>
+    </section>
+  </main>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <script src="/playback.js"></script>
+</body>
+</html>
