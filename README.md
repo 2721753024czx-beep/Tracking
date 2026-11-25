@@ -6,6 +6,17 @@
 
 当前侧重 macOS／Apple Silicon 的 CPU 实践流程。项目仍处于实验阶段，尚无完整独立身份真值支持的总体准确率或稳定部署结论。
 
+## 版本与回滚
+
+改进前的源码已保存在 [v3.0.0-baseline](https://github.com/2721753024czx-beep/Tracking/tree/v3.0.0-baseline)，对应提交 `14d61c01178dae9a09024cdcf7b914c268e986ae`。要在独立目录查看或运行旧代码，在项目根目录执行：
+
+```sh
+git fetch origin tag v3.0.0-baseline
+git worktree add --detach ../Tracking-baseline v3.0.0-baseline
+```
+
+这个标签保留源码。使用旧版运行实验时，先按下文准备依赖与模型，并为旧版指定独立的数据目录。录像、模型与工作区数据的恢复需要各自的本地备份。
+
 ## 能做什么
 
 | 功能 | 当前行为 |
@@ -58,6 +69,17 @@ python3.12 -m venv .venv
 双路页面中的局域网地址和主／子码流路径是示例；请展开各机位的“取流地址”，填写实际设备支持的 RTSP 地址。浏览器显示的是后端转换的预览，录制文件保存在所选工作区的 `captures/`。
 
 保留启动终端；退出时按 `Control+C`。关闭网页不会停止服务，单独打开网址也不会启动服务。再次使用相同 `--data` 会继续原工作区；公开仓库不含开发者的既有任务或录像。
+
+## 多帧外观排序实验
+
+从 `3.0/app/` 读取已索引的工作区和已有 OSNet 查询，比较单张代表图与多帧外观在同一批候选上的排名：
+
+```sh
+.venv/bin/python tools/compare_track_appearance.py \
+  --data data --task '<已有任务 ID>' --output /tmp/tracking-appearance-comparison.json
+```
+
+使用索引时对应的 OSNet 权重，必要时通过 `--osnet` 指定。工具从已记录的采样点选取最多五张人物图，优先选择不碰到画面边缘且覆盖片段不同时间的图，再对外观向量取均值并归一化。JSON 包含两种排名、分数、参与计算的采样时间和沿用原分数的情况。请指定新输出文件。实验以只读方式打开工作区，网页继续使用原有排序。
 
 ## 开发验证
 
