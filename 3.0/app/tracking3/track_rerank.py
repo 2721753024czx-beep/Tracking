@@ -11,6 +11,8 @@ from .store import Store
 
 
 POLICY = 'nonedge-time-bins-centroid-v1'
+GALLERY_POLICY = 'same-frames-top2-cosine-mean-v1'
+GALLERY_TOP_MATCHES = 2
 EDGE_PIXELS = 1
 MAX_FRAMES = 5
 
@@ -68,22 +70,31 @@ def _sample_groups(store, candidates, media_ids):
     return groups
 
 
-def _centroid_score(query, vectors):
-    """Keep the persisted query fixed and combine the selected gallery vectors."""
+def _unit_vectors(query, vectors):
     values = np.asarray(vectors, dtype=np.float64)
     if values.shape != (len(vectors), query.size) or not np.isfinite(values).all():
         raise ValueError('采样特征和查询特征不兼容')
     norms = np.linalg.norm(values, axis=1)
     if not np.isfinite(norms).all() or (norms <= 0).any():
         raise ValueError('采样特征不能归一化')
-    centroid = np.mean(values / norms[:, None], axis=0)
+    return values / norms[:, None]
+
+
+def _centroid_score(query, unit_vectors):
+    """Keep the persisted query fixed and combine the selected gallery vectors."""
+    centroid = np.mean(unit_vectors, axis=0)
     norm = np.linalg.norm(centroid)
     if norm <= 1e-12:
         return None
     return round(float(query @ (centroid / norm)), 4)
 
 
-def compare(data, encoder, task_id):
+def _gallery_score(query, unit_vectors):
+    similarities = np.sort(unit_vectors @ query)
+    return round(float(np.mean(similarities[-GALLERY_TOP_MATCHES:])), 4)
+
+
+def compare(data, encoder, task_id, *, compare_gallery=False):
     """Run independent ranking on one read-only DB snapshot and verified media."""
     store = Store.open_readonly(data)
     try:
@@ -113,6 +124,8 @@ def compare(data, encoder, task_id):
                           representative_s=candidate['representative'], status=candidate['status'],
                           baseline_rank=rank, baseline_score=candidate['score'], multiframe_score=candidate['score'],
                           policy='baseline', selected_frames=[])
+            if compare_gallery:
+                result.update(gallery_score=candidate['score'], gallery_policy='baseline')
             rows.append(result)
             if ident not in tracked:
                 result['selection'] = 'manual_or_single_frame'
@@ -131,21 +144,30 @@ def compare(data, encoder, task_id):
             offset = 0
             for result, selected in selections:
                 end = offset + len(selected)
-                score = _centroid_score(query, vectors[offset:end])
+                unit_vectors = _unit_vectors(query, vectors[offset:end])
+                score = _centroid_score(query, unit_vectors)
                 if score is None:
                     result['selection'] = 'degenerate_centroid'
                 else:
                     result.update(policy=POLICY, multiframe_score=score)
+                if compare_gallery and len(unit_vectors) >= GALLERY_TOP_MATCHES:
+                    result.update(gallery_score=_gallery_score(query, unit_vectors),
+                                  gallery_policy=GALLERY_POLICY)
                 offset = end
 
         # Ties retain baseline order. The output itself lists the baseline order.
         for rank, result in enumerate(sorted(rows, key=lambda row: -row['multiframe_score']), 1):
             result['multiframe_rank'] = rank
-        return dict(format='tracking3-track-appearance-comparison-v1', task_id=task_id,
-                    task_version=task['version'], encoder=encoder.version, policy=POLICY,
-                    max_selected_frames=MAX_FRAMES, edge_pixels=EDGE_PIXELS,
-                    rank_tie_break='baseline_order', score_decimals=4, candidate_count=len(rows),
-                    sources=[dict(media_id=m['id'], camera_id=m['camera_id'], source_sha256=m['fingerprint'])
-                             for m in media.values()], candidates=rows)
+        report = dict(format='tracking3-track-appearance-comparison-v1', task_id=task_id,
+                      task_version=task['version'], encoder=encoder.version, policy=POLICY,
+                      max_selected_frames=MAX_FRAMES, edge_pixels=EDGE_PIXELS,
+                      rank_tie_break='baseline_order', score_decimals=4, candidate_count=len(rows),
+                      sources=[dict(media_id=m['id'], camera_id=m['camera_id'], source_sha256=m['fingerprint'])
+                               for m in media.values()], candidates=rows)
+        if compare_gallery:
+            for rank, result in enumerate(sorted(rows, key=lambda row: -row['gallery_score']), 1):
+                result['gallery_rank'] = rank
+            report.update(gallery_policy=GALLERY_POLICY, gallery_top_matches=GALLERY_TOP_MATCHES)
+        return report
     finally:
         store.db.close()

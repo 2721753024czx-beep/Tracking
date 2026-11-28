@@ -20,6 +20,8 @@ def main():
     parser.add_argument('--output', type=Path, required=True, help='新建本地 JSON 文件，不覆盖')
     parser.add_argument('--osnet', type=Path, default=APP / 'models/osnet_x0_25_msmt17.pth',
                         help='与原任务相同的 OSNet 权重')
+    parser.add_argument('--compare-gallery', action='store_true',
+                        help='同时比较同组选帧的最高两个外观相似度均值')
     args = parser.parse_args()
     if args.output.exists() or args.output.is_symlink():
         parser.error('输出文件已经存在，请另用路径')
@@ -28,7 +30,7 @@ def main():
     torch.set_num_threads(4)
     try:
         encoder = Encoder(osnet=args.osnet, device='cpu')
-        result = compare(args.data, encoder, args.task)
+        result = compare(args.data, encoder, args.task, compare_gallery=args.compare_gallery)
         payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
         args.output.parent.mkdir(parents=True, exist_ok=True)
         # Publish a complete report atomically, including when another run

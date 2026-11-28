@@ -1,4 +1,5 @@
 from pathlib import Path
+from math import sqrt
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
@@ -6,7 +7,7 @@ from unittest.mock import patch
 from tools.generate_demo_dataset import write_video
 from tracking3.engine import Indexer, search
 from tracking3.store import Store, fingerprint
-from tracking3.track_rerank import POLICY, _features, compare
+from tracking3.track_rerank import GALLERY_POLICY, POLICY, _features, compare
 
 
 class FixtureEncoder:
@@ -77,6 +78,39 @@ class TrackRerank(unittest.TestCase):
         self.store.put('index_frame', row)
         with self.assertRaisesRegex(ValueError, '源帧与实际采样记录不同'):
             compare(self.store.root, self.encoder, 'task')
+
+    def test_gallery_is_opt_in_and_uses_two_best_cosines_on_same_frames(self):
+        target_vectors = {2: [1., 0.], 4: [.8, .6]}
+
+        def fixture_features(store, encoder, media, samples):
+            vectors = [target_vectors.get(sample['frame_index'], [0., 1.])
+                       if sample['detection']['local_track'] == '1' else [.9, sqrt(.19)]
+                       for sample in samples]
+            return vectors, []
+
+        with patch('tracking3.track_rerank._features', side_effect=fixture_features) as extract:
+            report = compare(self.store.root, self.encoder, 'task', compare_gallery=True)
+            extract.assert_called_once()
+            default = compare(self.store.root, self.encoder, 'task')
+
+        self.assertEqual(report['gallery_policy'], GALLERY_POLICY)
+        self.assertEqual(report['gallery_top_matches'], 2)
+        by_id = {c['observation_id']: c for c in report['candidates']}
+        target = by_id[self.target['id']]
+        self.assertEqual(target['gallery_score'], .9)
+        self.assertEqual(target['gallery_policy'], GALLERY_POLICY)
+        self.assertNotEqual(target['gallery_score'], target['multiframe_score'])
+        self.assertEqual(target['gallery_rank'], 2)  # Tied score favors the earlier baseline rank.
+        for ident in ('legacy', 'manual'):
+            result = by_id[ident]
+            self.assertEqual(result['gallery_policy'], 'baseline')
+            self.assertEqual(result['gallery_score'], result['baseline_score'])
+
+        self.assertNotIn('gallery_policy', default)
+        self.assertNotIn('gallery_top_matches', default)
+        unchanged = [{k: v for k, v in c.items() if not k.startswith('gallery_')}
+                     for c in report['candidates']]
+        self.assertEqual(default['candidates'], unchanged)
 
 
 if __name__ == '__main__':
